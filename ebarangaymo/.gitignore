@@ -1,0 +1,24 @@
+Ignore heavy dependency folders
+
+node_modules/
+*/node_modules/
+//node_modules/
+
+Ignore build and production outputs
+
+dist/
+build/
+out/
+
+Ignore secrets and environment variables (keep your passwords safe!)
+
+.env
+.env.local
+.env.development
+.env.production
+
+Ignore system and editor files
+
+.DS_Store
+Thumbs.db
+.vscode/
