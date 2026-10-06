@@ -6,6 +6,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState('');
+  const [signOutError, setSignOutError] = useState('');
 
   useEffect(() => {
     let alive = true;
@@ -20,7 +21,11 @@ export function AuthProvider({ children }) {
       try {
         await bootstrapCsrf();
         const session = await api.get('/auth/me');
-        if (alive) setUser(session.user);
+        if (alive) {
+          setUser(session.user);
+          setAuthError('');
+          setSignOutError('');
+        }
       } catch (error) {
         if (alive && error.status !== 401) setAuthError(error.message);
       } finally {
@@ -41,10 +46,16 @@ export function AuthProvider({ children }) {
     setUser(session.user);
   }, []);
   const signOut = useCallback(async () => {
-    await apiLogout();
-    setUser(null);
+    setSignOutError('');
+    try {
+      await apiLogout();
+      setUser(null);
+    } catch (error) {
+      setSignOutError(error.message);
+      throw error;
+    }
   }, []);
-  const value = useMemo(() => ({ user, loading, authError, signIn, signOut }), [user, loading, authError, signIn, signOut]);
+  const value = useMemo(() => ({ user, loading, authError, signIn, signOut, signOutError }), [user, loading, authError, signIn, signOut, signOutError]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {

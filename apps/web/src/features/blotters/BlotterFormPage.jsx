@@ -20,8 +20,13 @@ export function BlotterFormPage() {
   const navigate = useNavigate();
   const set = (name) => (event) => {
     const value = name === 'respondent_unknown' ? event.target.value === 'no' : event.target.value;
-    setValues((current) => ({ ...current, [name]: value }));
-    setErrors((current) => ({ ...current, [name]: undefined }));
+    if (name === 'respondent_unknown' && value) {
+      setValues((current) => ({ ...current, respondent_unknown: true, respondent_name: '', respondent_contact: '', respondent_sitio: '', respondent_resident_status: 'unknown' }));
+      setErrors((current) => ({ ...Object.fromEntries(Object.entries(current).filter(([field]) => !field.startsWith('respondent_'))), respondent_unknown: undefined }));
+    } else {
+      setValues((current) => ({ ...current, [name]: value }));
+      setErrors((current) => ({ ...current, [name]: undefined }));
+    }
     setServerError('');
   };
   const submit = async (event, asDraft = false) => {
