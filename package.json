@@ -1,0 +1,28 @@
+{
+  "name": "ebarangaymo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Academic digital blotter and community incident web app",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "install:apps": "npm --prefix apps/api ci && npm --prefix apps/web ci",
+    "dev:api": "npm --prefix apps/api run dev",
+    "dev:web": "npm --prefix apps/web run dev",
+    "start": "npm --prefix apps/api start",
+    "build": "npm --prefix apps/web run build",
+    "test": "npm --prefix apps/api test && npm --prefix apps/web test",
+    "test:integration": "npm --prefix apps/api run test:integration",
+    "test:e2e": "playwright test",
+    "lint": "npm --prefix apps/web run lint",
+    "db:up": "docker compose up -d --wait mysql",
+    "db:stop": "docker compose stop mysql",
+    "db:migrate": "npm --prefix apps/api run db:migrate",
+    "db:seed": "npm --prefix apps/api run db:seed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

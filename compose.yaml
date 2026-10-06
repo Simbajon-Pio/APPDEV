@@ -1,0 +1,26 @@
+name: ebarangaymo-sprint2
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: local-demo-root-only
+      MYSQL_DATABASE: ebarangaymo_test
+      MYSQL_USER: ebarangaymo
+      MYSQL_PASSWORD: local-demo-only
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  mysql_data:
+
+# Synthetic local development/test database only.
+# Never deploy these demonstration credentials or reset a shared school database.

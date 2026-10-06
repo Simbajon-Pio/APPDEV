@@ -1,0 +1,27 @@
+# Dependencies and generated output
+node_modules/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+*.log
+
+# Secrets (safe examples remain versioned)
+.env
+.env.*
+!.env.example
+
+# Local agent/editor workspaces
+.claude/worktrees/
+.superpowers/
+.kilo/
+.worktrees/
+.vscode/
+
+# Local prototype files retained outside the release baseline
+ebarangaymo/
+
+# OS files
+.DS_Store
+Thumbs.db
