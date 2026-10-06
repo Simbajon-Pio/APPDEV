@@ -323,6 +323,7 @@ button { color: inherit; }
   .page-wrap { padding-right: 24px; padding-left: 24px; }
   .filters-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .records-table { min-width: 790px; }
+  .table-scroll { max-width: 100%; overflow-x: auto; }
 }
 @media (max-width: 760px) {
   .topbar { height: 58px; gap: 11px; padding: 0 15px; }

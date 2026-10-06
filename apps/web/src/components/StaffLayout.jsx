@@ -9,18 +9,14 @@ const links = [
   { to: '/resident-reports', label: 'Resident Reports', icon: FilePlus2 },
 ];
 export function StaffLayout() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, signOutError } = useAuth();
   const [open, setOpen] = useState(false);
-  const [signOutError, setSignOutError] = useState('');
   const navigate = useNavigate();
   const handleSignOut = async () => {
-    setSignOutError('');
     try {
       await signOut();
       navigate('/login', { replace: true });
-    } catch (error) {
-      setSignOutError(error.message);
-    }
+    } catch {}
   };
   return <div className="staff-shell">
     <header className="topbar">

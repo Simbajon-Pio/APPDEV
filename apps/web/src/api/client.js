@@ -19,7 +19,7 @@ export function setUnauthorizedHandler(handler) {
   onUnauthorized = typeof handler === 'function' ? handler : () => {};
 }
 
-async function request(path, { method = 'GET', body, publicRequest = false, includeMeta = false } = {}) {
+async function request(path, { method = 'GET', body, publicRequest = false, includeMeta = false, includeStatus = false } = {}) {
   const headers = new Headers({ Accept: 'application/json' });
   if (body !== undefined) headers.set('Content-Type', 'application/json');
   if (!publicRequest && method !== 'GET' && csrfToken) headers.set('X-CSRF-Token', csrfToken);
@@ -60,7 +60,7 @@ async function request(path, { method = 'GET', body, publicRequest = false, incl
     }
     return { items: envelope.data, meta };
   }
-  return envelope.data;
+  return includeStatus ? { data: envelope.data, status: response.status } : envelope.data;
 }
 
 export const api = {
@@ -68,6 +68,7 @@ export const api = {
   getList: (path) => request(path, { includeMeta: true }),
   post: (path, body) => request(path, { method: 'POST', body }),
   patch: (path, body) => request(path, { method: 'PATCH', body }),
+  postWithStatus: (path, body) => request(path, { method: 'POST', body, includeStatus: true }),
   publicGet: (path) => request(path, { publicRequest: true }),
   publicPost: (path, body) => request(path, { method: 'POST', body, publicRequest: true }),
 };
@@ -86,11 +87,9 @@ export async function login(credentials) {
 }
 
 export async function logout() {
-  try {
-    return await api.post('/auth/logout', {});
-  } finally {
-    setCsrfToken(null);
-  }
+  const result = await api.post('/auth/logout', {});
+  setCsrfToken(null);
+  return result;
 }
 
 export function queryString(values) {

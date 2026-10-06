@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { api, ApiError, bootstrapCsrf, login, setCsrfToken } from '../src/api/client.js';
+import { api, ApiError, bootstrapCsrf, login, logout, setCsrfToken } from '../src/api/client.js';
 
 describe('contract API client', () => {
   beforeEach(() => {
@@ -25,6 +25,18 @@ describe('contract API client', () => {
     await api.post('/auth/logout', {});
     expect(fetchMock.mock.calls[1][1].headers.get('X-CSRF-Token')).toBe('anonymous-csrf');
     expect(fetchMock.mock.calls[2][1].headers.get('X-CSRF-Token')).toBe('staff-csrf');
+  });
+
+  it('preserves the CSRF token after logout fails so an authenticated retry can succeed', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: { csrf_token: 'current-token' } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: 'INTERNAL_ERROR', message: 'Logout failed.' } }), { status: 500 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: { logged_out: true } }), { status: 200 }));
+    await bootstrapCsrf();
+    await expect(logout()).rejects.toMatchObject({ status: 500 });
+    await logout();
+    expect(fetchMock.mock.calls[1][1].headers.get('X-CSRF-Token')).toBe('current-token');
+    expect(fetchMock.mock.calls[2][1].headers.get('X-CSRF-Token')).toBe('current-token');
   });
 
   it('preserves list metadata separately from the contract data array', async () => {
