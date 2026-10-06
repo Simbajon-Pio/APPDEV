@@ -1,3 +1,6 @@
+# Local browser diagnostics
+.playwright-mcp/
+
 # Dependencies and generated output
 node_modules/
 dist/
