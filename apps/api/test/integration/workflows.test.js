@@ -222,6 +222,16 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
 
   const noCsrf = await tenantA.patch(`/api/blotters/${created.body.data.id}/status`).set('Origin', origin).send({ status: 'pending_lupon', expected_version: 3, reason: 'Synthetic reopening reason' });
   assert.equal(noCsrf.status, 403);
+  const unauthenticatedMutation = await request(app).post('/api/blotters').set('Origin', origin).send(base);
+  assert.equal(unauthenticatedMutation.status, 401, JSON.stringify(unauthenticatedMutation.body));
+  const anonymousLogin = request.agent(app);
+  const anonymousCsrf = await anonymousLogin.get('/api/auth/csrf');
+  const missingLoginCsrf = await anonymousLogin.post('/api/auth/login').set('Origin', origin).send({ username: credentials.a.username, password: credentials.a.password });
+  assert.equal(missingLoginCsrf.status, 403, JSON.stringify(missingLoginCsrf.body));
+  const noStaffCsrf = await tenantA.patch(`/api/blotters/${created.body.data.id}/status`).set('Origin', origin).send({ status: 'pending_lupon', expected_version: 3, reason: 'Synthetic reopening reason' });
+  assert.equal(noStaffCsrf.status, 403, JSON.stringify(noStaffCsrf.body));
+  const attackerOrigin = await tenantA.patch(`/api/blotters/${created.body.data.id}/status`).set('Origin', 'https://attacker.invalid').set('X-CSRF-Token', csrfA).send({ status: 'pending_lupon', expected_version: 3 });
+  assert.equal(attackerOrigin.status, 403, JSON.stringify(attackerOrigin.body));
   const approvedWithReportedPartyDetails = await request(app).post('/api/public/barangays/demo-a/reports').set('Origin', origin).send({
     reporter_name: 'Synthetic Party Details Reporter', reporter_contact: '123456789', incident_type: 'property_dispute',
     incident_datetime: base.incident_datetime, sitio: 'Synthetic Purok 5', landmark: null,
