@@ -96,7 +96,7 @@ The user permits Sonnet implementation agents and requests maximum reasoning eff
 
 - Select `sonnet` and `effort: "max"` when the execution interface supports both; the workflow runner does. If another interface has no effort setting, report that limitation instead of claiming it was configured.
 - Give each agent a specific task and non-overlapping file ownership.
-- Use task branches/worktrees consistent with this policy; do not let automatically named branches replace the approved task convention without agreement.
+- Use task branches/worktrees consistent with this policy. If the agent harness permits only its automatic isolated worktree, use that as a temporary execution workspace; the coordinator reviews and integrates owned changes into the exact `T#` branch. Never substitute a helper branch for the approved task/integration history.
 - Avoid simultaneous writes to shared contracts, root configuration, or lockfiles.
 - Review agent output against the specification and actual test results. Do not assume an agent's completion message is proof.
 - Preserve the human task assignments; delegating to an agent does not reassign a Jira issue.

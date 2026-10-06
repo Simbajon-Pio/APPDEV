@@ -1,6 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, origin } from './fixtures.js';
 
-const origin = process.env.E2E_BASE_URL || 'http://localhost:5173';
 const password = process.env.DEMO_PASSWORD || 'DemoOnly!2026';
 
 async function authenticate(request, username) {
@@ -39,21 +38,21 @@ function intake(overrides = {}) {
 
 const mutationHeaders = (token) => ({ Origin: origin, 'X-CSRF-Token': token });
 
-test('real MySQL workflow preserves drafts, audit metadata, and exactly-once resident approval', async ({ request }) => {
-  const { token } = await authenticate(request, 'demo_a');
+test('real MySQL workflow preserves drafts, audit metadata, and exactly-once resident approval', async ({ authenticatedRequest }) => {
+  const { context, token } = authenticatedRequest;
   const draftBody = intake({ status: 'draft' });
-  const created = await request.post('/api/blotters', { headers: mutationHeaders(token), data: draftBody });
+  const created = await context.post('/api/blotters', { headers: mutationHeaders(token), data: draftBody });
   expect(created.status()).toBe(201);
   const { data: draft } = await created.json();
   expect(draft.case_id).toMatch(/^BLOT-[A-Z0-9]+-\d{4}-\d{5,}$/);
   expect(draft.submitted_at).toBeNull();
 
-  const active = await request.get(`/api/blotters?q=${encodeURIComponent(draft.case_id)}`);
+  const active = await context.get(`/api/blotters?q=${encodeURIComponent(draft.case_id)}`);
   expect((await active.json()).data).toHaveLength(0);
-  const filtered = await request.get(`/api/blotters?status=draft&q=${encodeURIComponent(draft.case_id)}`);
+  const filtered = await context.get(`/api/blotters?status=draft&q=${encodeURIComponent(draft.case_id)}`);
   expect((await filtered.json()).data[0].id).toBe(draft.id);
 
-  const submitted = await request.patch(`/api/blotters/${draft.id}/status`, {
+  const submitted = await context.patch(`/api/blotters/${draft.id}/status`, {
     headers: mutationHeaders(token), data: { status: 'pending_lupon', expected_version: draft.version },
   });
   expect(submitted.status()).toBe(200);
@@ -63,12 +62,12 @@ test('real MySQL workflow preserves drafts, audit metadata, and exactly-once res
   expect(official.created_by).toBe(draft.created_by);
   expect(official.submitted_at).not.toBeNull();
 
-  const stale = await request.patch(`/api/blotters/${draft.id}/status`, {
+  const stale = await context.patch(`/api/blotters/${draft.id}/status`, {
     headers: mutationHeaders(token), data: { status: 'settled_at_desk', expected_version: draft.version },
   });
   expect(stale.status()).toBe(409);
 
-  const resident = await request.post('/api/public/barangays/demo-a/reports', {
+  const resident = await context.post('/api/public/barangays/demo-a/reports', {
     headers: { Origin: origin },
     data: {
       reporter_name: `Synthetic Resident ${Date.now()}`,
@@ -87,27 +86,26 @@ test('real MySQL workflow preserves drafts, audit metadata, and exactly-once res
   expect(acknowledgement.reference).toMatch(/^RPT-/);
   expect(acknowledgement).not.toHaveProperty('reporter_name');
 
-  const queue = await request.get(`/api/resident-reports?q=${encodeURIComponent(acknowledgement.reference)}`);
+  const queue = await context.get(`/api/resident-reports?q=${encodeURIComponent(acknowledgement.reference)}`);
   const report = (await queue.json()).data[0];
   expect(report.status).toBe('pending_review');
-  const approvals = await Promise.all([0, 1].map(() => request.post(`/api/resident-reports/${report.id}/approve`, {
+  const approvals = await Promise.all([0, 1].map(() => context.post(`/api/resident-reports/${report.id}/approve`, {
     headers: mutationHeaders(token), data: { intake: intake({ complainant_name: 'Confirmed Synthetic Reporter' }) },
   })));
   expect(approvals.map((response) => response.status()).sort()).toEqual([200, 201]);
   const outcomes = await Promise.all(approvals.map((response) => response.json()));
   expect(outcomes[0].data.blotter.id).toBe(outcomes[1].data.blotter.id);
-  const reviewed = await request.get(`/api/resident-reports/${report.id}`);
+  const reviewed = await context.get(`/api/resident-reports/${report.id}`);
   const { data: persisted } = await reviewed.json();
   expect(persisted.original.reporter_name).not.toBe('Confirmed Synthetic Reporter');
   expect(persisted.status).toBe('approved');
 });
 
-test('a second tenant cannot read or update another tenant case', async ({ playwright }) => {
-  const a = await playwright.request.newContext({ baseURL: origin });
+test('a second tenant cannot read or update another tenant case', async ({ authenticatedRequest, playwright }) => {
+  const { context: a, token: tokenA } = authenticatedRequest;
   const b = await playwright.request.newContext({ baseURL: origin });
   try {
-    const authA = await authenticate(a, 'demo_a');
-    const created = await a.post('/api/blotters', { headers: mutationHeaders(authA.token), data: intake() });
+    const created = await a.post('/api/blotters', { headers: mutationHeaders(tokenA), data: intake() });
     expect(created.status()).toBe(201);
     const { data: caseA } = await created.json();
     const authB = await authenticate(b, 'demo_b');
@@ -121,7 +119,6 @@ test('a second tenant cannot read or update another tenant case', async ({ playw
     const search = await b.get(`/api/blotters?q=${encodeURIComponent(caseA.case_id)}`);
     expect((await search.json()).data).toHaveLength(0);
   } finally {
-    await a.dispose();
     await b.dispose();
   }
 });
