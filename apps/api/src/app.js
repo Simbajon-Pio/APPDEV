@@ -10,7 +10,7 @@ import { createIpRateLimiter } from './rate-limit.js';
 
 export function createApp({ pool = createDatabasePool(), env = process.env, sessionStore } = {}) {
   const app = express();
-  const appOrigin = env.APP_ORIGIN || 'http://localhost:5173';
+  const appOrigin = env.APP_ORIGIN || 'http://127.0.0.1:5173';
   const appUrl = env.PUBLIC_APP_URL || appOrigin;
   const isProduction = env.NODE_ENV === 'production';
   if (isProduction && (!env.SESSION_SECRET || Buffer.byteLength(env.SESSION_SECRET) < 32)) {
@@ -37,6 +37,15 @@ export function createApp({ pool = createDatabasePool(), env = process.env, sess
   });
   app.use(express.json({ limit: '32kb', strict: true }));
   app.use(sessionMiddleware);
+  app.use((req, _res, next) => {
+    const protectedMutation = req.path === '/api/auth/logout'
+      || req.path === '/api/blotters' || req.path.startsWith('/api/blotters/')
+      || req.path === '/api/resident-reports' || req.path.startsWith('/api/resident-reports/');
+    if (protectedMutation && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) && !req.session?.user) {
+      return next(new HttpError(401, 'UNAUTHENTICATED', 'Sign in to continue.'));
+    }
+    next();
+  });
   app.use(enforceCsrf({ appOrigin }));
   const loginLimiter = createIpRateLimiter({ limit: 10 });
   const publicLimiter = createIpRateLimiter({ limit: 5 });
