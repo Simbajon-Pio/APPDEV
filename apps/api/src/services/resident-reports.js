@@ -120,12 +120,11 @@ export function validateApprovalAgainstOriginal(report, intake) {
   compare('complainant_name', 'reporter_name', { required: true, normalize: (value) => typeof value === 'string' ? value.trim() : value });
   compare('complainant_contact', 'reporter_contact', { required: true, normalize: (value) => value === '' ? null : value });
   compare('complainant_sitio', 'reporter_sitio', { required: true, normalize: (value) => value === '' ? null : value });
-  if (intake.complainant_resident_status !== 'unknown') fields.complainant_resident_status = 'Residency was not supplied and must remain unknown';
+  compare('complainant_resident_status', 'reporter_resident_status', { required: true });
   compare('respondent_name', 'respondent_name', { required: true, normalize: (value) => value === '' ? null : value });
-  for (const field of ['respondent_contact', 'respondent_sitio']) {
-    if (intake[field] !== null && intake[field] !== undefined && intake[field] !== '') fields[field] = 'This respondent detail was not supplied';
-  }
-  if (intake.respondent_resident_status !== 'unknown') fields.respondent_resident_status = 'Respondent residency was not supplied and must remain unknown';
+  compare('respondent_contact', 'respondent_contact', { required: true, normalize: (value) => value === '' ? null : value });
+  compare('respondent_sitio', 'respondent_sitio', { required: true, normalize: (value) => value === '' ? null : value });
+  compare('respondent_resident_status', 'respondent_resident_status', { required: true });
   if (report.respondent_name === null || report.respondent_name === undefined || report.respondent_name === '') {
     if (intake.respondent_unknown !== true) fields.respondent_name = 'Must remain unknown when no respondent was submitted';
   } else if (intake.respondent_unknown !== false) {

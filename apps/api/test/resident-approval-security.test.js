@@ -80,6 +80,29 @@ test('resident approval cannot add unsubmitted party residence or residency deta
   assert.ok(result.fields.complainant_resident_status);
 });
 
+test('resident approval matches known supplied complainant and respondent details after normalization', () => {
+  const knownDetails = {
+    ...report,
+    reporter_contact: '123456789',
+    respondent_name: 'Known Respondent',
+    respondent_contact: '987654321',
+    respondent_sitio: 'Known Respondent Purok',
+    landmark: null
+  };
+  const confirmedIntake = {
+    ...intake,
+    complainant_contact: '123456789',
+    complainant_sitio: 'Known Complainant Purok',
+    respondent_unknown: false,
+    respondent_name: 'Known Respondent',
+    respondent_contact: '987654321',
+    respondent_sitio: 'Known Respondent Purok',
+    complainant_resident_status: 'unknown',
+    respondent_resident_status: 'unknown'
+  };
+  assert.deepEqual(validateApprovalAgainstOriginal(knownDetails, confirmedIntake), { ok: true });
+});
+
 test('known original contact and respondent details cannot be silently discarded or changed', () => {
   const known = { ...report, reporter_contact: '123456789', respondent_name: 'Known Respondent', landmark: 'Known Landmark' };
   const incomplete = validateApprovalAgainstOriginal(known, intake);
