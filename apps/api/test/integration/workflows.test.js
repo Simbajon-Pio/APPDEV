@@ -111,6 +111,10 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
   assert.equal(stillPendingAfterPartyConflict.body.data.status, 'pending_review');
   const addedUnreportedContact = await tenantA.post(`/api/resident-reports/${report.id}/approve`).set('Origin', origin).set('X-CSRF-Token', csrfA).send({ intake: { ...intake, complainant_contact: '123456789' } });
   assert.equal(addedUnreportedContact.status, 422, JSON.stringify(addedUnreportedContact.body));
+  const addedUnreportedHome = await tenantA.post(`/api/resident-reports/${report.id}/approve`).set('Origin', origin).set('X-CSRF-Token', csrfA).send({ intake: { ...intake, complainant_sitio: 'Invented Home Purok' } });
+  assert.equal(addedUnreportedHome.status, 422, JSON.stringify(addedUnreportedHome.body));
+  const addedUnreportedResidency = await tenantA.post(`/api/resident-reports/${report.id}/approve`).set('Origin', origin).set('X-CSRF-Token', csrfA).send({ intake: { ...intake, complainant_resident_status: 'resident' } });
+  assert.equal(addedUnreportedResidency.status, 422, JSON.stringify(addedUnreportedResidency.body));
   const stillPending = await tenantA.get(`/api/resident-reports/${report.id}`);
   assert.equal(stillPending.body.data.status, 'pending_review');
   assert.equal(stillPending.body.data.original.narrative, 'Synthetic resident report.');
