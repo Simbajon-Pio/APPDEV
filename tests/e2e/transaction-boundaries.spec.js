@@ -72,6 +72,8 @@ test('logout invalidates access and the old mutation token cannot be reused', as
   const logout = await request.post('/api/auth/logout', { headers: headers(token), data: {} });
   expect(logout.status()).toBe(200);
   expect((await request.get('/api/auth/me')).status()).toBe(401);
+  const repeatedLogout = await request.post('/api/auth/logout', { headers: headers(token), data: {} });
+  expect(repeatedLogout.status()).toBe(401);
   const attempted = await request.post('/api/blotters', { headers: headers(token), data: intake('Synthetic logged-out attempt') });
   expect(attempted.status()).toBe(401);
 });

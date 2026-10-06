@@ -48,7 +48,7 @@ export function BlotterDetailPage() {
       const history = await api.get(`/blotters/${encodeURIComponent(id)}/events`); setEvents(Array.isArray(history) ? history : []);
     } catch (cause) {
       if (cause.status === 409) {
-        setStatusError('This record changed since it was opened. The latest version is being reloaded.');
+        setStatusError('This record changed since it was opened. The latest version has been reloaded.');
         try { await load(); } catch { /* load state supplies a separate visible error */ }
       } else setStatusError(cause.message);
     } finally { setBusy(false); }

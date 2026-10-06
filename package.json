@@ -19,6 +19,7 @@
     "lint": "npm --prefix apps/web run lint",
     "db:up": "docker compose up -d --wait mysql",
     "db:stop": "docker compose stop mysql",
+    "db:down": "docker compose down",
     "db:migrate": "npm --prefix apps/api run db:migrate",
     "db:seed": "npm --prefix apps/api run db:seed"
   },

@@ -25,7 +25,7 @@ const base = {
   respondent_unknown: true, respondent_name: null, respondent_contact: null, respondent_sitio: null,
   respondent_resident_status: 'unknown', narrative: 'Synthetic integration test incident.', status: 'pending_lupon'
 };
-const origin = process.env.APP_ORIGIN || 'http://localhost:5173';
+const origin = process.env.APP_ORIGIN || 'http://127.0.0.1:5173';
 const credentials = {
   a: { username: 'demo_a', password: process.env.DEMO_PASSWORD || 'DemoOnly!2026' },
   b: { username: 'demo_b', password: process.env.DEMO_PASSWORD || 'DemoOnly!2026' }

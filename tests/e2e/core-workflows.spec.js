@@ -67,10 +67,11 @@ test('real MySQL workflow preserves drafts, audit metadata, and exactly-once res
   });
   expect(stale.status()).toBe(409);
 
+  const reporterName = `Synthetic Resident ${Date.now()}`;
   const resident = await context.post('/api/public/barangays/demo-a/reports', {
     headers: { Origin: origin },
     data: {
-      reporter_name: `Synthetic Resident ${Date.now()}`,
+      reporter_name: reporterName,
       reporter_contact: null,
       incident_type: draftBody.incident_type,
       incident_datetime: draftBody.incident_datetime,
@@ -89,16 +90,28 @@ test('real MySQL workflow preserves drafts, audit metadata, and exactly-once res
   const queue = await context.get(`/api/resident-reports?q=${encodeURIComponent(acknowledgement.reference)}`);
   const report = (await queue.json()).data[0];
   expect(report.status).toBe('pending_review');
+  const approvalIntake = {
+    ...draftBody,
+    status: 'pending_lupon',
+    complainant_name: reporterName,
+    respondent_unknown: true,
+  };
   const approvals = await Promise.all([0, 1].map(() => context.post(`/api/resident-reports/${report.id}/approve`, {
-    headers: mutationHeaders(token), data: { intake: intake({ complainant_name: 'Confirmed Synthetic Reporter' }) },
+    headers: mutationHeaders(token), data: { intake: approvalIntake },
   })));
   expect(approvals.map((response) => response.status()).sort()).toEqual([200, 201]);
   const outcomes = await Promise.all(approvals.map((response) => response.json()));
   expect(outcomes[0].data.blotter.id).toBe(outcomes[1].data.blotter.id);
   const reviewed = await context.get(`/api/resident-reports/${report.id}`);
   const { data: persisted } = await reviewed.json();
-  expect(persisted.original.reporter_name).not.toBe('Confirmed Synthetic Reporter');
+  expect(persisted.original.reporter_name).toBe(reporterName);
   expect(persisted.status).toBe('approved');
+  const approvedBlotter = await context.get(`/api/blotters/${persisted.blotter_id}`);
+  expect(approvedBlotter.status()).toBe(200);
+  const { data: converted } = await approvedBlotter.json();
+  expect(converted.complainant_name).toBe(reporterName);
+  expect(converted.incident_datetime).toBe(report.original.incident_datetime);
+  expect(converted.respondent_unknown).toBe(true);
 });
 
 test('a second tenant cannot read or update another tenant case', async ({ authenticatedRequest, playwright }) => {
