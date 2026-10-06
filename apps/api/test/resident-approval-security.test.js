@@ -18,7 +18,7 @@ const intake = {
 test('resident approval compares MySQL datetime rows and equivalent explicit-offset timestamps', () => {
   const mysqlRow = { ...report, incident_datetime: '2025-10-05 16:30:00.000', landmark: null };
   const offsetIntake = { ...intake, incident_datetime: new Date('2025-10-05T16:30:00.000Z') };
-  assert.deepEqual(validateApprovalAgainstOriginal(mysqlRow, offsetIntake), { ok: true });
+  assert.deepEqual(validateApprovalAgainstOriginal(mysqlRow, { ...offsetIntake, complainant_resident_status: 'unknown', respondent_resident_status: 'unknown' }), { ok: true });
 });
 
 test('resident approval rejects a timestamp shift smaller than one second', () => {
@@ -38,7 +38,7 @@ test('resident approval rejects inventing absent respondent identity or contact'
 });
 
 test('resident approval accepts known values while preserving unknown respondent details as unknown', () => {
-  const result = validateApprovalAgainstOriginal(report, { ...intake, landmark: 'Original Landmark' });
+  const result = validateApprovalAgainstOriginal(report, { ...intake, landmark: 'Original Landmark', complainant_resident_status: 'unknown', respondent_resident_status: 'unknown' });
   assert.deepEqual(result, { ok: true });
 });
 
@@ -92,7 +92,7 @@ test('resident approval matches known supplied complainant and respondent detail
   const confirmedIntake = {
     ...intake,
     complainant_contact: '123456789',
-    complainant_sitio: 'Known Complainant Purok',
+    complainant_sitio: null,
     respondent_unknown: false,
     respondent_name: 'Known Respondent',
     respondent_contact: '987654321',
@@ -105,14 +105,14 @@ test('resident approval matches known supplied complainant and respondent detail
 
 test('known original contact and respondent details cannot be silently discarded or changed', () => {
   const known = { ...report, reporter_contact: '123456789', respondent_name: 'Known Respondent', landmark: 'Known Landmark' };
-  const incomplete = validateApprovalAgainstOriginal(known, intake);
+  const incomplete = validateApprovalAgainstOriginal(known, { ...intake, complainant_resident_status: 'unknown' });
   assert.equal(incomplete.ok, false);
   assert.ok(incomplete.fields.complainant_contact);
   assert.ok(incomplete.fields.respondent_name);
   assert.ok(incomplete.fields.landmark);
   const changed = validateApprovalAgainstOriginal(known, {
     ...intake, complainant_contact: '987654321', respondent_unknown: false,
-    respondent_name: 'Other Respondent', landmark: 'Other Landmark'
+    respondent_name: 'Other Respondent', landmark: 'Other Landmark', complainant_resident_status: 'unknown'
   });
   assert.equal(changed.ok, false);
   assert.ok(changed.fields.complainant_contact);

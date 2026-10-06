@@ -222,6 +222,26 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
 
   const noCsrf = await tenantA.patch(`/api/blotters/${created.body.data.id}/status`).set('Origin', origin).send({ status: 'pending_lupon', expected_version: 3, reason: 'Synthetic reopening reason' });
   assert.equal(noCsrf.status, 403);
+  const approvedWithReportedPartyDetails = await request(app).post('/api/public/barangays/demo-a/reports').set('Origin', origin).send({
+    reporter_name: 'Synthetic Party Details Reporter', reporter_contact: '123456789', incident_type: 'property_dispute',
+    incident_datetime: base.incident_datetime, sitio: 'Synthetic Purok 5', landmark: null,
+    respondent_name: 'Synthetic Known Respondent', narrative: 'Synthetic report with submitted respondent.', website: ''
+  });
+  assert.equal(approvedWithReportedPartyDetails.status, 201, JSON.stringify(approvedWithReportedPartyDetails.body));
+  const partyDetailsQueue = await tenantA.get('/api/resident-reports');
+  const partyDetailsReport = partyDetailsQueue.body.data.find((item) => item.reference === approvedWithReportedPartyDetails.body.data.reference);
+  const validPartyIntake = {
+    ...base, incident_type: 'property_dispute', incident_datetime: new Date('2025-10-05T16:30:00.000Z'),
+    sitio: 'Synthetic Purok 5', complainant_name: 'Synthetic Party Details Reporter',
+    complainant_contact: '123456789', respondent_unknown: false, respondent_name: 'Synthetic Known Respondent',
+    respondent_contact: null, respondent_sitio: null, narrative: 'Synthetic report with submitted respondent.',
+    landmark: null, complainant_resident_status: 'unknown', respondent_resident_status: 'unknown'
+  };
+  const approvedPartyDetails = await tenantA.post(`/api/resident-reports/${partyDetailsReport.id}/approve`).set('Origin', origin).set('X-CSRF-Token', csrfA).send({ intake: validPartyIntake });
+  assert.equal(approvedPartyDetails.status, 201, JSON.stringify(approvedPartyDetails.body));
+  assert.equal(approvedPartyDetails.body.data.blotter.complainant_contact, '123456789');
+  assert.equal(approvedPartyDetails.body.data.blotter.respondent_name, 'Synthetic Known Respondent');
+
   const overviewA = await tenantA.get('/api/overview');
   const overviewB = await tenantB.get('/api/overview');
   assert.equal(overviewA.status, 200);
