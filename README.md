@@ -80,7 +80,7 @@ Sprint 2 builds the connected desk-officer and resident-report workflows: staff 
    npm run db:seed
    ```
 
-   Optional: `npm run db:seed:demo` loads sample blotters and resident reports for Lahug and Subangdaku, plus three extra staff accounts (`rhea.villanueva` and `joel.ramirez` in Lahug, `ana.dizon` in Subangdaku). All names, sitios, contacts, and incidents are fictional. It is safe to re-run; it skips a barangay that already has records created by these staff accounts.
+   Optional: `npm run db:seed:demo` loads sample blotters and resident reports for Lahug and Subangdaku, plus four team staff accounts (`kacey.burce` and `eunice.melencion` in Lahug, `steven.tampos` and `pio.simbajon` in Subangdaku). Resident and party names, sitios, contacts, and incidents are fictional. It is safe to re-run; it skips a barangay that already has records created by these staff accounts.
 
 ### Start the app
 

@@ -1,5 +1,5 @@
-// Fictional demo data: the names, sitios, contacts and incidents below are invented for demonstration only.
-// They do not describe real residents, real households or real cases.
+// Demo data. Staff accounts use the project team's names. Every resident, party, sitio, contact and incident
+// below is invented for demonstration only and does not describe real residents, households or cases.
 import mysql from '../apps/api/node_modules/mysql2/promise.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -17,9 +17,10 @@ try { process.loadEnvFile(resolve(here, '../apps/api/.env')); } catch (error) { 
 
 const DAY = 86400000;
 const STAFF_ACCOUNTS = [
-  ['rhea.villanueva', 'Rhea Villanueva', 'cebu-city-lahug'],
-  ['joel.ramirez', 'Joel Ramirez', 'cebu-city-lahug'],
-  ['ana.dizon', 'Ana Dizon', 'mandaue-city-subangdaku']
+  ['kacey.burce', 'Kacey Burce', 'cebu-city-lahug'],
+  ['eunice.melencion', 'Eunice Melencion', 'cebu-city-lahug'],
+  ['steven.tampos', 'John Steven Tampos', 'mandaue-city-subangdaku'],
+  ['pio.simbajon', 'Pio Simbajon', 'mandaue-city-subangdaku']
 ];
 const CONTACT = (n) => `0900 000 0${String(n).padStart(3, '0')}`;
 
@@ -34,20 +35,20 @@ const LAHUG_WALK_INS = [
   { by: 'demo_a', ago: 4, hour: 21, minute: 20, status: 'draft', type: 'curfew_violation', sitio: 'Purok Sampaguita', landmark: 'near the chapel',
     complainant: 'Liza Mae Gonzaga', respondent: null,
     narrative: 'Reporter saw three minors walking along the chapel road past 10 PM on a school night. They were told to go home and left. The reporter asked that the sighting be recorded.', steps: [] },
-  { by: 'rhea.villanueva', ago: 41, hour: 23, minute: 40, status: 'pending_lupon', type: 'noise_disturbance', sitio: 'Purok 4', landmark: 'in front of a sari-sari store',
+  { by: 'kacey.burce', ago: 41, hour: 23, minute: 40, status: 'pending_lupon', type: 'noise_disturbance', sitio: 'Purok 4', landmark: 'in front of a sari-sari store',
     complainant: 'Rodel Cabahug', complainantContact: CONTACT(101), respondent: 'Edgar Sumbillo', respondentContact: CONTACT(142),
     narrative: 'Videoke ran past midnight during the fiesta novena, and the complainant says repeated requests to lower the volume were ignored. The respondent says it was a birthday party and the speakers were turned down after the first complaint.', steps: [] },
   { by: 'demo_a_staff', ago: 33, hour: 9, minute: 15, status: 'pending_lupon', type: 'property_dispute', sitio: 'Purok Rosal', landmark: 'beside the basketball court',
     complainant: 'Maricel Abangan', respondent: 'Ronaldo Tumulak',
     narrative: 'A new bamboo fence was built about 40 centimeters past the concrete marker the complainant says separates the two lots. The respondent says the marker was never surveyed. Both sides agreed to a joint re-measurement before any fence is moved.',
     steps: [['settled_at_desk', 'Both parties agreed to a joint re-measurement; fence to be adjusted after the survey.']] },
-  { by: 'joel.ramirez', ago: 55, hour: 14, minute: 5, status: 'pending_lupon', type: 'financial_dispute', sitio: 'Purok Malipayon', landmark: 'near the health center',
+  { by: 'eunice.melencion', ago: 55, hour: 14, minute: 5, status: 'pending_lupon', type: 'financial_dispute', sitio: 'Purok Malipayon', landmark: 'near the health center',
     complainant: 'Jessa Mae Tabada', complainantContact: CONTACT(158), respondent: 'Efren Cuizon', respondentContact: CONTACT(177),
     narrative: 'The complainant lent PHP 8,000 in March on a promise to repay within three months. Payments stopped after June. The respondent acknowledges the loan but disputes the remaining balance and asks for an itemized statement.', steps: [] },
   { by: 'demo_a', ago: 18, hour: 17, minute: 30, status: 'settled_at_desk', type: 'physical_altercation', sitio: 'Purok 2', landmark: 'in front of the barangay waiting shed',
     complainant: 'Rowena Ocampo', respondent: 'Kevin Tamayo',
     narrative: 'After a barangay basketball game, two players argued and one shoved the other. The complainant has a bruise on her left arm from stepping in. No medical certificate was presented. Both players agreed to keep apart and to settle it at the desk.', steps: [] },
-  { by: 'rhea.villanueva', ago: 12, hour: 18, minute: 45, status: 'pending_lupon', type: 'others', sitio: 'Purok Ilang-ilang', landmark: 'near the chapel',
+  { by: 'kacey.burce', ago: 12, hour: 18, minute: 45, status: 'pending_lupon', type: 'others', sitio: 'Purok Ilang-ilang', landmark: 'near the chapel',
     complainant: 'Dennis Lumapas', complainantContact: CONTACT(204), respondent: 'Restituto Gallardo',
     narrative: 'A neighbor\'s dog bit a seven-year-old on the calf as the child walked past the gate. The wound was cleaned at the health center. The owner says the dog was leashed, but he did not attend the summons.',
     steps: [['referred_to_pnp', 'Owner did not attend the mediation summons; referred for further action.']] },
@@ -55,14 +56,14 @@ const LAHUG_WALK_INS = [
     complainant: 'Benjie Lagunay', respondent: null,
     narrative: 'A blue bicycle was taken from the gate of a house in Purok Sampaguita during the night. The complainant suspects a former helper but has no proof. A lupon hearing was set, but the suspect did not appear.',
     steps: [['unresolved', 'Suspect did not appear at the scheduled hearing; no evidence presented.']] },
-  { by: 'joel.ramirez', ago: 15, hour: 20, minute: 0, status: 'pending_lupon', type: 'noise_disturbance', sitio: 'Purok 7', landmark: 'beside the covered court',
+  { by: 'eunice.melencion', ago: 15, hour: 20, minute: 0, status: 'pending_lupon', type: 'noise_disturbance', sitio: 'Purok 7', landmark: 'beside the covered court',
     complainant: 'Nenita Caballero', respondent: null,
     narrative: 'Karaoke sessions at a house near the covered court run until after 11 PM on weekends. The household agreed at the desk to stop earlier, but the sessions resumed the following weekend.',
     steps: [['settled_at_desk', 'Household agreed to a 10 PM limit for videoke at the desk.'], ['pending_lupon', 'Videoke resumed the following weekend; complainant asked for a formal hearing.']] },
   { by: 'demo_a_staff', ago: 6, hour: 13, minute: 10, status: 'pending_lupon', type: 'property_dispute', sitio: 'Purok Sampaguita', landmark: 'behind the health center',
     complainant: 'Dolores Vitug', complainantContact: CONTACT(233), respondent: 'Armando Labiste',
     narrative: 'A mango tree on the respondent\'s lot has branches hanging over the complainant\'s roof that drop debris during storms. The respondent said he would trim it but has not done so yet. The complainant asks for a written schedule.', steps: [] },
-  { by: 'rhea.villanueva', ago: 2, hour: 23, minute: 5, status: 'draft', type: 'physical_altercation', sitio: 'Purok 4', landmark: 'near the sari-sari store at the corner',
+  { by: 'kacey.burce', ago: 2, hour: 23, minute: 5, status: 'draft', type: 'physical_altercation', sitio: 'Purok 4', landmark: 'near the sari-sari store at the corner',
     complainant: 'Ruel Sumalinog', respondent: null,
     narrative: 'An argument during a late-night pool game outside a sari-sari store turned into a brief scuffle. No injuries were reported. The complainant asked that the incident be logged but does not want a hearing.', steps: [] }
 ];
@@ -71,20 +72,20 @@ const SUBANGDAKU_WALK_INS = [
   { by: 'demo_b', ago: 5, hour: 22, minute: 10, status: 'draft', type: 'curfew_violation', sitio: 'Purok Narra', landmark: 'near the elementary school gate',
     complainant: 'Teresita Caindoy', respondent: null,
     narrative: 'Three teenagers were seen at the basketball court after 10:30 PM and were asked to go home. They left without argument. The reporter asked for the visit to be recorded.', steps: [] },
-  { by: 'ana.dizon', ago: 35, hour: 19, minute: 50, status: 'pending_lupon', type: 'noise_disturbance', sitio: 'Purok 3', landmark: 'beside the waiting shed',
+  { by: 'steven.tampos', ago: 35, hour: 19, minute: 50, status: 'pending_lupon', type: 'noise_disturbance', sitio: 'Purok 3', landmark: 'beside the waiting shed',
     complainant: 'Ariel Villamor', complainantContact: CONTACT(301), respondent: 'Glenn Tudtud', respondentContact: CONTACT(256),
     narrative: 'A family celebration with a karaoke machine continued until after midnight, and a neighbor on night shift could not sleep. The respondent says it was a one-time event and apologized at the gate the next morning.', steps: [] },
   { by: 'demo_b', ago: 29, hour: 11, minute: 0, status: 'pending_lupon', type: 'financial_dispute', sitio: 'Purok Dahlia', landmark: 'near the covered court',
     complainant: 'Lolita Sabellano', respondent: 'Mario Rañola',
     narrative: 'The complainant sold a secondhand motorbike on installment, and the buyer missed three payments. The buyer says work has been slow and asked for a revised schedule. Both sides agreed to the new schedule at the desk.',
     steps: [['settled_at_desk', 'Revised installment schedule agreed at the desk.']] },
-  { by: 'ana.dizon', ago: 52, hour: 8, minute: 40, status: 'pending_lupon', type: 'property_dispute', sitio: 'Sitio Pag-asa', landmark: 'near the chapel',
+  { by: 'steven.tampos', ago: 52, hour: 8, minute: 40, status: 'pending_lupon', type: 'property_dispute', sitio: 'Sitio Pag-asa', landmark: 'near the chapel',
     complainant: 'Ferdinand Pagaduan', respondent: 'Cora Lynn Dinglasan',
     narrative: 'A water hose runs across both lots and was reconnected without permission. The respondent says the previous owner installed it and that she was never told. The complainant wants the line moved before the rainy season.', steps: [] },
   { by: 'demo_b', ago: 20, hour: 16, minute: 15, status: 'settled_at_desk', type: 'physical_altercation', sitio: 'Purok 5', landmark: 'in front of a sari-sari store',
     complainant: 'Jun-Jun Espina', respondent: 'Ronnie Bongcawil',
     narrative: 'Two neighbors argued over a parked tricycle and exchanged shoves. Neither was hurt. They agreed to keep the tricycle on the side road and to keep apart while the matter is settled.', steps: [] },
-  { by: 'ana.dizon', ago: 14, hour: 9, minute: 0, status: 'pending_lupon', type: 'property_dispute', sitio: 'Purok 3', landmark: 'beside the waiting shed',
+  { by: 'pio.simbajon', ago: 14, hour: 9, minute: 0, status: 'pending_lupon', type: 'property_dispute', sitio: 'Purok 3', landmark: 'beside the waiting shed',
     complainant: 'Corazon Abella', complainantContact: CONTACT(312), respondent: 'Wilfredo Dagohoy',
     narrative: 'A tenant has stayed two months past the end of the lease and stopped answering messages. The landlord says two written summons went unanswered.',
     steps: [['referred_to_pnp', 'Tenant ignored two summons; referred for further action.']] },
@@ -92,14 +93,14 @@ const SUBANGDAKU_WALK_INS = [
     complainant: 'Efren Calimag', respondent: null,
     narrative: 'A red bicycle was taken from a parked spot near the chapel during the fiesta night. No suspect has been identified, and the complainant asks that the case stay on record.',
     steps: [['unresolved', 'No suspect identified after the initial inquiry.']] },
-  { by: 'ana.dizon', ago: 10, hour: 20, minute: 20, status: 'pending_lupon', type: 'noise_disturbance', sitio: 'Purok Dahlia', landmark: 'beside the covered court',
+  { by: 'steven.tampos', ago: 10, hour: 20, minute: 20, status: 'pending_lupon', type: 'noise_disturbance', sitio: 'Purok Dahlia', landmark: 'beside the covered court',
     complainant: 'Estela Quimpo', respondent: null,
     narrative: 'A drum and bugle group practicing for the fiesta parade ran until 11 PM on three nights, and neighbors asked them to finish earlier. The group agreed at the desk to end by 9 PM, but practice ran late again on the next two nights.',
     steps: [['settled_at_desk', 'Group agreed to end practice by 9 PM.'], ['pending_lupon', 'Practice ran past 10 PM on two more nights; complainant requested a hearing.']] },
   { by: 'demo_b', ago: 7, hour: 17, minute: 40, status: 'pending_lupon', type: 'physical_altercation', sitio: 'Purok 5', landmark: 'beside the basketball court',
     complainant: 'Rommel Tejada', respondent: 'Edwin Bacalso',
     narrative: 'A scuffle broke out between a player and a spectator after a close basketball game. The spectator says he was pushed into a fence, and the player says the spectator started it. Minor scratches were treated at home.', steps: [] },
-  { by: 'ana.dizon', ago: 1, hour: 8, minute: 5, status: 'draft', type: 'property_dispute', sitio: 'Purok Dahlia', landmark: 'behind the health center',
+  { by: 'pio.simbajon', ago: 1, hour: 8, minute: 5, status: 'draft', type: 'property_dispute', sitio: 'Purok Dahlia', landmark: 'behind the health center',
     complainant: 'Lorna Gacutan', complainantContact: CONTACT(330), respondent: 'Noel Bantilan', respondentContact: CONTACT(311),
     narrative: 'A neighbor\'s gutter drains onto the complainant\'s yard during heavy rain, leaving the yard flooded for days. The complainant asks for an inspection before the next rainy season.', steps: [] }
 ];
@@ -110,14 +111,14 @@ const LAHUG_REPORTS = [
     narrative: 'A neighbor\'s drainage pipe was moved during repairs and now empties onto the reporter\'s side of the lot line whenever it rains. The reporter has asked twice for it to be fixed.', outcome: 'pending' },
   { ago: 6, hour: 19, minute: 30, type: 'noise_disturbance', sitio: 'Purok 4', landmark: 'beside the basketball court', reporter: 'Gemma Paglinawan', reporterContact: null, respondent: null,
     narrative: 'Loud videoke from a rented hall during the fiesta weekend continued until after midnight on Saturday. The reporter\'s infant could not sleep. The reporter is not sure which unit owns the speakers.', outcome: 'pending' },
-  { by: 'rhea.villanueva', ago: 16, hour: 10, minute: 5, type: 'physical_altercation', sitio: 'Purok 2', landmark: 'in front of a sari-sari store', reporter: 'Vicente Gaviola', reporterContact: CONTACT(528), respondent: 'Jerome Sepe',
+  { by: 'kacey.burce', ago: 16, hour: 10, minute: 5, type: 'physical_altercation', sitio: 'Purok 2', landmark: 'in front of a sari-sari store', reporter: 'Vicente Gaviola', reporterContact: CONTACT(528), respondent: 'Jerome Sepe',
     narrative: 'A neighbor threw a plastic chair during an argument over a shared water hose. The chair struck the reporter on the shoulder. The reporter did not need treatment but wants the matter recorded.', outcome: 'approved', approveAs: 'pending_lupon' },
-  { by: 'joel.ramirez', ago: 9, hour: 16, minute: 40, type: 'financial_dispute', sitio: 'Purok Malipayon', landmark: null, reporter: 'Erlinda Montebon', reporterContact: null, respondent: null,
+  { by: 'eunice.melencion', ago: 9, hour: 16, minute: 40, type: 'financial_dispute', sitio: 'Purok Malipayon', landmark: null, reporter: 'Erlinda Montebon', reporterContact: null, respondent: null,
     narrative: 'A cooperative member borrowed PHP 3,500 last month and has not returned it. The reporter says the member now avoids her at the market. She wants the amount recorded and a repayment schedule set.', outcome: 'approved', approveAs: 'settled_at_desk' },
-  { by: 'joel.ramirez', ago: 11, hour: 21, minute: 0, type: 'noise_disturbance', sitio: 'Purok 4', landmark: 'in front of a sari-sari store', reporter: 'Teodora Abejo', reporterContact: null, respondent: null,
-    narrative: 'Videoke at the house near the store kept going past midnight during the fiesta novena. The same household was already reported at the desk.', outcome: 'rejected', by: 'joel.ramirez', reason: 'Duplicate of a walk-in complaint already recorded' },
-  { by: 'joel.ramirez', ago: 25, hour: 15, minute: 30, type: 'property_dispute', sitio: 'Purok 7', landmark: null, reporter: 'Samuel Rebutar', reporterContact: null, respondent: 'Pedro Dagatan',
-    narrative: 'The reporter says a fence was built on a lot inside a neighboring subdivision. The reporter lives across the road and wants the barangay to intervene.', outcome: 'rejected', by: 'joel.ramirez', reason: 'Incident occurred outside the barangay\'s jurisdiction' }
+  { by: 'eunice.melencion', ago: 11, hour: 21, minute: 0, type: 'noise_disturbance', sitio: 'Purok 4', landmark: 'in front of a sari-sari store', reporter: 'Teodora Abejo', reporterContact: null, respondent: null,
+    narrative: 'Videoke at the house near the store kept going past midnight during the fiesta novena. The same household was already reported at the desk.', outcome: 'rejected', by: 'eunice.melencion', reason: 'Duplicate of a walk-in complaint already recorded' },
+  { by: 'eunice.melencion', ago: 25, hour: 15, minute: 30, type: 'property_dispute', sitio: 'Purok 7', landmark: null, reporter: 'Samuel Rebutar', reporterContact: null, respondent: 'Pedro Dagatan',
+    narrative: 'The reporter says a fence was built on a lot inside a neighboring subdivision. The reporter lives across the road and wants the barangay to intervene.', outcome: 'rejected', by: 'eunice.melencion', reason: 'Incident occurred outside the barangay\'s jurisdiction' }
 ];
 
 const SUBANGDAKU_REPORTS = [
@@ -125,19 +126,19 @@ const SUBANGDAKU_REPORTS = [
     narrative: 'A neighbor keeps several roosters in a small pen next to the reporter\'s kitchen. The roosters start crowing before 4 AM. The reporter asks the desk to talk to the owner.', outcome: 'pending' },
   { ago: 8, hour: 18, minute: 20, type: 'property_dispute', sitio: 'Purok Narra', landmark: null, reporter: 'Arlene Ybañez', reporterContact: CONTACT(633), respondent: 'Lito Macaraeg',
     narrative: 'The respondent parks his car across the shared driveway every evening, which blocks the reporter\'s gate. The reporter has asked him to move it twice. The respondent says the driveway is public.', outcome: 'pending' },
-  { by: 'ana.dizon', ago: 12, hour: 21, minute: 15, type: 'others', sitio: 'Purok 5', landmark: 'near the elementary school gate', reporter: 'Dennis Paquibot', reporterContact: CONTACT(699), respondent: null,
+  { by: 'steven.tampos', ago: 12, hour: 21, minute: 15, type: 'others', sitio: 'Purok 5', landmark: 'near the elementary school gate', reporter: 'Dennis Paquibot', reporterContact: CONTACT(699), respondent: null,
     narrative: 'Someone threw a stone at the reporter\'s gate during the night. The stone cracked a gate post. The reporter did not see who did it.', outcome: 'approved', approveAs: 'pending_lupon' },
   { by: 'demo_b', ago: 19, hour: 22, minute: 40, type: 'curfew_violation', sitio: 'Sitio Pag-asa', landmark: 'beside the basketball court', reporter: 'Ruben Tumaneng', reporterContact: null, respondent: null,
     narrative: 'Minors were drinking beer near the basketball court after 11 PM and left the bottles on the road. They left when asked. The reporter wants the incident noted for the parents.', outcome: 'approved', approveAs: 'settled_at_desk' },
-  { by: 'ana.dizon', ago: 13, hour: 23, minute: 10, type: 'noise_disturbance', sitio: 'Purok 3', landmark: 'beside the waiting shed', reporter: 'Sheryl Quinto', reporterContact: null, respondent: null,
-    narrative: 'Karaoke from the same family celebration continued past midnight. The celebration was already reported at the desk by a neighbor.', outcome: 'rejected', by: 'ana.dizon', reason: 'Duplicate of a walk-in complaint already recorded' },
+  { by: 'pio.simbajon', ago: 13, hour: 23, minute: 10, type: 'noise_disturbance', sitio: 'Purok 3', landmark: 'beside the waiting shed', reporter: 'Sheryl Quinto', reporterContact: null, respondent: null,
+    narrative: 'Karaoke from the same family celebration continued past midnight. The celebration was already reported at the desk by a neighbor.', outcome: 'rejected', by: 'steven.tampos', reason: 'Duplicate of a walk-in complaint already recorded' },
   { by: 'demo_b', ago: 21, hour: 13, minute: 0, type: 'property_dispute', sitio: 'Purok Dahlia', landmark: null, reporter: 'Eduardo Tomas', reporterContact: null, respondent: 'Pablo Mirasol',
     narrative: 'A boundary wall was built on a lot located in a neighboring barangay, and the reporter lives across the street. The reporter asks the barangay to mediate.', outcome: 'rejected', by: 'demo_b', reason: 'Incident occurred outside the barangay\'s jurisdiction' }
 ];
 
 const PLANS = [
-  { slug: 'cebu-city-lahug', label: 'Lahug', creators: ['demo_a', 'demo_a_staff', 'rhea.villanueva', 'joel.ramirez'], marker: ['rhea.villanueva', 'joel.ramirez'], walkIns: LAHUG_WALK_INS, reports: LAHUG_REPORTS },
-  { slug: 'mandaue-city-subangdaku', label: 'Subangdaku', creators: ['demo_b', 'ana.dizon'], marker: ['ana.dizon'], walkIns: SUBANGDAKU_WALK_INS, reports: SUBANGDAKU_REPORTS }
+  { slug: 'cebu-city-lahug', label: 'Lahug', creators: ['demo_a', 'demo_a_staff', 'kacey.burce', 'eunice.melencion'], marker: ['kacey.burce', 'eunice.melencion'], walkIns: LAHUG_WALK_INS, reports: LAHUG_REPORTS },
+  { slug: 'mandaue-city-subangdaku', label: 'Subangdaku', creators: ['demo_b', 'steven.tampos', 'pio.simbajon'], marker: ['steven.tampos', 'pio.simbajon'], walkIns: SUBANGDAKU_WALK_INS, reports: SUBANGDAKU_REPORTS }
 ];
 
 // Build and validate every record before any write, so a contract violation never leaves a partial demo set.
@@ -244,7 +245,7 @@ try {
     }
     summaries.push(`${plan.label}: created ${plan.walkIns.length} walk-in blotters and ${counts.approved} blotters from approved resident reports; ${plan.reports.length} resident reports (${counts.pending} pending review, ${counts.approved} approved, ${counts.rejected} rejected).`);
   }
-  process.stdout.write(`Demo seed: upserted ${STAFF_ACCOUNTS.length} staff accounts (${STAFF_ACCOUNTS.map(([username]) => username).join(', ')}).\n${summaries.map((line) => `  ${line}`).join('\n')}\nDemo names and incidents are fictional.\n`);
+  process.stdout.write(`Demo seed: upserted ${STAFF_ACCOUNTS.length} staff accounts (${STAFF_ACCOUNTS.map(([username]) => username).join(', ')}).\n${summaries.map((line) => `  ${line}`).join('\n')}\nResident names and incidents are fictional; staff accounts use the team's names.\n`);
 } catch (error) {
   process.stderr.write(`Demo seed failed: ${error.message}\n`);
   process.exitCode = 1;
