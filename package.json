@@ -21,7 +21,8 @@
     "db:stop": "docker compose stop mysql",
     "db:down": "docker compose down",
     "db:migrate": "npm --prefix apps/api run db:migrate",
-    "db:seed": "npm --prefix apps/api run db:seed"
+    "db:seed": "npm --prefix apps/api run db:seed",
+    "db:create-admin": "npm --prefix apps/api run db:create-admin --"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2"

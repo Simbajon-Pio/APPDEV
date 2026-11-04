@@ -35,7 +35,7 @@ test('staff creates a persisted official record through the intake screen', asyn
 
 test('resident submits through a phone-width form and receives a genuine receipt', async ({ page }) => {
   await page.setViewportSize({ width: 400, height: 850 });
-  await page.goto('/report/demo-a');
+  await page.goto('/report/cebu-city-lahug');
   await page.locator('#reporter_name').fill(`Synthetic Browser Resident ${Date.now()}`);
   await page.locator('#incident_type').selectOption('property_dispute');
   await page.locator('#incident_datetime').fill(manilaWallTime());

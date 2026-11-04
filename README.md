@@ -92,7 +92,16 @@ npm run dev:api
 npm run dev:web
 ```
 
-Open **http://127.0.0.1:5173/login**. Use the seeded synthetic account `demo_a` or `demo_b` and the password in `DEMO_PASSWORD` (default: `DemoOnly!2026`). These demo identities and records are for local demonstration only.
+Open **http://127.0.0.1:5173/login**. Use the seeded synthetic account `demo_a` or `demo_b` and the password in `DEMO_PASSWORD` (default: `DemoOnly!2026`). `demo_a` is an administrator of Lahug (Cebu City, slug `cebu-city-lahug`) and `demo_b` is an administrator of Subangdaku (Mandaue City, slug `mandaue-city-subangdaku`). `demo_a_staff` is a desk-staff account in Lahug and cannot open Accounts. These demo identities and records are for local demonstration only.
+
+The seed loads the official barangay lists for Cebu City (80), Mandaue City (27), and Lapu-Lapu City (30) from `database/barangays.js`. Earlier "Demo Barangay A/B" rows are left in place but the demo accounts no longer use them.
+
+To create a real administrator for a barangay, put the password in the environment rather than the command line, then run the script:
+
+```powershell
+$env:NEW_ADMIN_PASSWORD = "<at least 10 characters>"
+npm run db:create-admin -- cebu-city-lahug <username> "Display Name"
+```
 
 Keep using `127.0.0.1` for the UI address. Do not open the UI through `localhost` or port `5000`: the API validates the exact browser Origin, and port `5000` is not the Vite UI. Vite forwards relative `/api` requests to the local API.
 
@@ -133,7 +142,9 @@ npm run build
 apps/api/             Express API, MySQL access, session/security code, backend tests
 apps/web/             React/Vite UI, API client, feature pages and frontend tests
 database/migrations/  Versioned MySQL schema changes
-database/seed.js       Synthetic local demo accounts and tenant seed
+database/seed.js       Synthetic local demo accounts and barangay seed
+database/barangays.js  Official barangay names for the seeded cities
+database/create-admin.js  Creates an active administrator for one barangay
  tests/e2e/            Chromium end-to-end checks
  docs/                 Project goals, API contract, sprint scope, hosting guidance
 AGENTS.md              Canonical contributor and AI policy

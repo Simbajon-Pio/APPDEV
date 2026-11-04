@@ -24,6 +24,12 @@ export function requireUser(req, _res, next) {
   next();
 }
 
+export function requireAdmin(req, _res, next) {
+  if (!req.session?.user) return next(new HttpError(401, 'UNAUTHENTICATED', 'Sign in to continue.'));
+  if (req.session.user.role !== 'admin') return next(new HttpError(403, 'FORBIDDEN', 'Only barangay administrators can do this.'));
+  next();
+}
+
 export function enforceCsrf({ appOrigin }) {
   return (req, _res, next) => {
     if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();

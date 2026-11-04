@@ -4,6 +4,8 @@ import { ProtectedRoute } from './auth/ProtectedRoute.jsx';
 import { StaffLayout } from './components/StaffLayout.jsx';
 import { BlotterDetailPage } from './features/blotters/BlotterDetailPage.jsx';
 import { BlotterFormPage } from './features/blotters/BlotterFormPage.jsx';
+import { AccountsPage } from './features/accounts/AccountsPage.jsx';
+import { BarangayPage } from './features/barangay/BarangayPage.jsx';
 import { BlottersPage } from './features/blotters/BlottersPage.jsx';
 import { ResidentReportDetailPage } from './features/reports/ResidentReportDetailPage.jsx';
 import { ResidentReportsPage } from './features/reports/ResidentReportsPage.jsx';
@@ -24,6 +26,8 @@ export default function App() {
         <Route path="blotters/:id" element={<BlotterDetailPage />} />
         <Route path="resident-reports" element={<ResidentReportsPage />} />
         <Route path="resident-reports/:id" element={<ResidentReportDetailPage />} />
+        <Route path="barangay" element={<BarangayPage />} />
+        <Route path="accounts" element={<AccountsPage />} />
       </Route>
     </Route>
     <Route path="*" element={<Navigate to="/login" replace />} />

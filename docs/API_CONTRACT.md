@@ -80,7 +80,7 @@ Example (synthetic names):
 1. `GET /api/auth/csrf` creates/uses an anonymous server session and returns `{ "data": { "csrf_token": "opaque-token" } }`. Send `Cache-Control: no-store`.
 2. `POST /api/auth/login` takes `{ "username": "demo_a", "password": "user-supplied" }`, with `X-CSRF-Token` and allowed Origin. Username 1–80, password 1–128. Login failures are generic, not user-existence disclosures. Rate-limit 10 attempts per 15 minutes per client IP.
 3. Successful login regenerates the session ID and CSRF token, and returns `{ "data": { "user": User, "csrf_token": "new-token" } }`.
-4. `GET /api/auth/me` returns the same authenticated shape. User contains `id`, `username`, `display_name`, `barangay: { id, name, code, slug }`, `city: { id, name }`, and `report_url` (the configured public form URL).
+4. `GET /api/auth/me` returns the same authenticated shape. User contains `id`, `username`, `display_name`, `role` (`admin` or `staff`), `barangay: { id, name, code, slug }`, `city: { id, name }`, and `report_url` (the configured public form URL).
 5. Every staff mutation sends the current `X-CSRF-Token` and same-origin credentials. Reject missing/incorrect token or disallowed Origin with 403. Do not use unrestricted CORS. Test clients supply the configured Origin.
 6. `POST /api/auth/logout` requires staff session and CSRF, destroys its session and clears the cookie, then returns `{ "data": { "logged_out": true } }`. Bootstrap CSRF again before another login.
 
@@ -123,7 +123,7 @@ Only non-draft blotters and the authenticated tenant's pending submissions contr
 
 ## 5. Public resident endpoints
 
-- `GET /api/public/barangays/:slug`: public `{ id, name, slug, city_name, report_url, incident_categories }` within `data`. No users, case counts, addresses, narratives, or contacts. `report_url` is the configured app base plus `/report/:slug`, not a DB/admin portal.
+- `GET /api/public/barangays/:slug`: public `{ id, name, slug, city_name, hall_address, contact_number, report_url, incident_categories }` within `data`. `hall_address` and `contact_number` are the barangay office's published details and are null when unset. No users, case counts, resident addresses, narratives, or personal contacts. `report_url` is the configured app base plus `/report/:slug`, not a DB/admin portal.
 - `POST /api/public/barangays/:slug/reports`: required `reporter_name` (1–160), `incident_type`, `incident_datetime`, `sitio`, `narrative`; optional/null `reporter_contact`, `landmark`, `respondent_name`; optional `website` honeypot (must be empty). Use staff field bounds. Tenant comes only from the slug. Additional identity/audit/status fields are rejected.
 - Limit 5 submissions per 15 minutes per client IP, independent from sign-in. Bound input; reject honeypot submissions generically without insertion. Public submission does not require a staff CSRF token; it has no authenticated privileges. Do not allow cross-origin browser submission unless explicitly configured.
 - Successful persistence returns 201 and no personal details:
@@ -162,3 +162,21 @@ References use cryptographically random bytes and a unique index, not a fixed va
 9. Session expiry, server restart, sanitized API failures, and frontend error/conflict states are tested with real MySQL integration where applicable.
 
 Routine contract defaults (bounds, session duration, list size, rate limits, explicit version and CSRF endpoint) are defined here for both teams. Change them only through coordinated contract edits; do not invent incompatible shapes independently.
+
+## 8. Accounts and barangay profile
+
+Account management and barangay profile edits require a session whose `role` is `admin`. Staff receive 403 `FORBIDDEN`. Every query is limited to the caller's barangay; another tenant's account ID returns 404 `NOT_FOUND`. Mutations use the same CSRF and Origin rules as Section 3.
+
+### Account shape
+
+`{ "id": 7, "username": "desk.officer", "display_name": "Desk Officer", "role": "staff", "is_active": true, "created_at": "2026-11-05T01:02:03.000Z" }`. Password hashes are never returned.
+
+- `GET /api/accounts`: `{ "data": [Account] }` ordered by username.
+- `POST /api/accounts`: body `{ username, display_name, role, password }`. Username is trimmed and lowercased and must match `^[a-z0-9_.]{3,80}$`. `display_name` is 1–160 characters. `role` is `admin` or `staff`. `password` is 10–128 characters. Returns 201 with the Account. A taken username returns 409 `CONFLICT`.
+- `PATCH /api/accounts/:id`: body contains at least one of `display_name`, `role`, `is_active` (boolean). Returns the Account. An administrator cannot remove their own administrator access or deactivate their own account (422 `VALIDATION_ERROR`). Changing the role or deactivating an account ends that user's existing sessions.
+- `POST /api/accounts/:id/password`: body `{ password }` (10–128 characters). Returns `{ "data": { "password_reset": true } }`. Ends the target account's sessions; the caller's current session is kept.
+
+### Barangay profile
+
+- `GET /api/barangay`: `{ "data": { id, name, code, slug, hall_address, contact_number, city: { id, name }, report_url } }` for the caller's barangay. Staff may read it.
+- `PATCH /api/barangay` (administrators only): body contains at least one of `name` (1–120 characters), `hall_address` (at most 255 characters; null or blank for none), and `contact_number` (null or blank for none; otherwise 7–20 characters of digits, spaces, `+`, `-`, `(`, `)` with at least 7 digits). `code` and `slug` are fixed and rejected as unknown fields. Returns the same shape as the GET. A rename updates the administrator's session.
