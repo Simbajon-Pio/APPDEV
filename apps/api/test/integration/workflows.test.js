@@ -183,7 +183,7 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
 
   const tenantAReportId = report.id;
   assert.equal((await tenantB.get(`/api/resident-reports/${tenantAReportId}`)).status, 404);
-  assert.equal((await tenantB.get('/api/resident-reports')).body.meta.total, 0);
+  assert.equal((await tenantB.get('/api/resident-reports')).body.data.some((item) => item.id === tenantAReportId), false);
   const forbiddenOrigin = await tenantA.patch(`/api/blotters/${created.body.data.id}/status`).set('Origin', 'https://attacker.invalid').set('X-CSRF-Token', csrfA).send({ status: 'pending_lupon', expected_version: 2, reason: 'Synthetic reason' });
   assert.equal(forbiddenOrigin.status, 403);
   const invalidSpoof = await tenantA.post('/api/blotters').set('Origin', origin).set('X-CSRF-Token', csrfA).send({ ...base, city_id: 9999 });
@@ -282,12 +282,12 @@ test('administrators manage tenant accounts while staff and other tenants are bl
   const otherAdmin = request.agent(app);
   const otherAdminCsrf = await signedIn(otherAdmin, credentials.b.username, credentials.b.password);
   const password = 'Synthetic-Pass-2026';
-  const username = `synthetic_${Date.now().toString(36)}`;
+  const username = `desk.${Date.now().toString(36)}`;
 
   assert.equal((await staff.get('/api/accounts')).status, 403);
   assert.equal((await staff.patch('/api/barangay').set('Origin', origin).set('X-CSRF-Token', staffCsrf).send({ name: 'Staff Rename' })).status, 403);
 
-  const created = await admin.post('/api/accounts').set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ username: ` ${username.toUpperCase()} `, display_name: 'Synthetic Desk User', role: 'staff', password });
+  const created = await admin.post('/api/accounts').set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ username: ` ${username.toUpperCase()} `, display_name: 'Carmela Ybañez', role: 'staff', password });
   assert.equal(created.status, 201, JSON.stringify(created.body));
   assert.equal(created.body.data.username, username);
   assert.equal(created.body.data.role, 'staff');

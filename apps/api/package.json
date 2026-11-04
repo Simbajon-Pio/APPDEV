@@ -11,6 +11,7 @@
     "test:integration": "node --test test/integration/*.test.js",
     "db:migrate": "node ../../database/migrate.js",
     "db:seed": "node ../../database/seed.js",
+    "db:seed:demo": "node ../../database/seed-demo.js",
     "db:create-admin": "node ../../database/create-admin.js"
   },
   "dependencies": {

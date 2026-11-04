@@ -22,6 +22,7 @@
     "db:down": "docker compose down",
     "db:migrate": "npm --prefix apps/api run db:migrate",
     "db:seed": "npm --prefix apps/api run db:seed",
+    "db:seed:demo": "npm --prefix apps/api run db:seed:demo",
     "db:create-admin": "npm --prefix apps/api run db:create-admin --"
   },
   "devDependencies": {
