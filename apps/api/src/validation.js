@@ -136,3 +136,87 @@ export function validateListQuery(query, { reports = false } = {}) {
   }
   return Object.keys(fields).length ? { ok: false, fields } : { ok: true, ...pagination };
 }
+
+export function routeId(value) {
+  if (!/^\d+$/.test(value)) return null;
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+export function unknownFields(body, allowed) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return { body: 'Must be a JSON object' };
+  const fields = {};
+  for (const key of Object.keys(body)) if (!allowed.has(key)) fields[key] = 'Unknown field';
+  return fields;
+}
+
+const ROLE_VALUES = new Set(['admin', 'staff']);
+
+export function validateNewAccount(body) {
+  const fields = unknownFields(body, new Set(['username', 'display_name', 'role', 'password']));
+  if (fields.body) return { ok: false, fields };
+  for (const name of ['username', 'display_name', 'role', 'password']) if (!Object.hasOwn(body, name)) fields[name] = 'Required';
+  const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
+  if (Object.hasOwn(body, 'username') && !/^[a-z0-9_.]{3,80}$/.test(username)) fields.username = 'Use 3–80 letters, numbers, dots, or underscores';
+  const displayName = typeof body.display_name === 'string' ? body.display_name.trim() : '';
+  if (Object.hasOwn(body, 'display_name') && (displayName.length < 1 || displayName.length > 160)) fields.display_name = 'Must contain 1–160 characters';
+  if (Object.hasOwn(body, 'role') && !ROLE_VALUES.has(body.role)) fields.role = 'Choose administrator or staff';
+  if (Object.hasOwn(body, 'password') && (typeof body.password !== 'string' || body.password.length < 10 || body.password.length > 128)) fields.password = 'Use 10–128 characters';
+  if (Object.keys(fields).length) return { ok: false, fields };
+  return { ok: true, value: { username, display_name: displayName, role: body.role, password: body.password } };
+}
+
+export function validateAccountUpdate(body) {
+  const fields = unknownFields(body, new Set(['display_name', 'role', 'is_active']));
+  if (fields.body) return { ok: false, fields };
+  const value = {};
+  if (Object.hasOwn(body, 'display_name')) {
+    const displayName = typeof body.display_name === 'string' ? body.display_name.trim() : '';
+    if (displayName.length < 1 || displayName.length > 160) fields.display_name = 'Must contain 1–160 characters';
+    else value.display_name = displayName;
+  }
+  if (Object.hasOwn(body, 'role')) {
+    if (!ROLE_VALUES.has(body.role)) fields.role = 'Choose administrator or staff';
+    else value.role = body.role;
+  }
+  if (Object.hasOwn(body, 'is_active')) {
+    if (typeof body.is_active !== 'boolean') fields.is_active = 'Must be true or false';
+    else value.is_active = body.is_active;
+  }
+  if (!Object.keys(value).length && !Object.keys(fields).length) fields.body = 'Provide at least one field to update';
+  if (Object.keys(fields).length) return { ok: false, fields };
+  return { ok: true, value };
+}
+
+export function validatePasswordReset(body) {
+  const fields = unknownFields(body, new Set(['password']));
+  if (fields.body) return { ok: false, fields };
+  if (!Object.hasOwn(body, 'password')) fields.password = 'Required';
+  else if (typeof body.password !== 'string' || body.password.length < 10 || body.password.length > 128) fields.password = 'Use 10–128 characters';
+  if (Object.keys(fields).length) return { ok: false, fields };
+  return { ok: true, value: { password: body.password } };
+}
+
+export function validateBarangayUpdate(body) {
+  const fields = unknownFields(body, new Set(['name', 'hall_address', 'contact_number']));
+  if (fields.body) return { ok: false, fields };
+  const value = {};
+  if (Object.hasOwn(body, 'name')) {
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    if (name.length < 1 || name.length > 120) fields.name = 'Must contain 1–120 characters';
+    else value.name = name;
+  }
+  if (Object.hasOwn(body, 'hall_address')) {
+    const address = trimOrNull(body.hall_address);
+    if (address !== null && (typeof address !== 'string' || address.length > 255)) fields.hall_address = 'Must be at most 255 characters';
+    else value.hall_address = address;
+  }
+  if (Object.hasOwn(body, 'contact_number')) {
+    const contact = trimOrNull(body.contact_number);
+    if (contact !== null && (typeof contact !== 'string' || !/^[0-9 +()\-]{7,20}$/.test(contact) || contact.replace(/\D/g, '').length < 7)) fields.contact_number = 'Enter a valid contact number';
+    else value.contact_number = contact;
+  }
+  if (!Object.keys(value).length && !Object.keys(fields).length) fields.body = 'Provide at least one field to update';
+  if (Object.keys(fields).length) return { ok: false, fields };
+  return { ok: true, value };
+}

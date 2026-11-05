@@ -1,6 +1,8 @@
 import { Router } from 'express';
-import { asyncRoute, HttpError, notFoundError, requireUser, sendData, validationError } from './http.js';
-import { validateIntake, validateListQuery, parseTimestamp } from './validation.js';
+import { asyncRoute, HttpError, notFoundError, requireAdmin, requireUser, sendData, validationError } from './http.js';
+import { accountsRouter } from './routes/accounts.js';
+import { barangayRouter } from './routes/barangay.js';
+import { parseTimestamp, routeId, unknownFields, validateIntake, validateListQuery } from './validation.js';
 import { changeBlotterStatus, createBlotter, getBlotter, getOverview, listBlotters, listEvents } from './services/blotters.js';
 import {
   approveResidentReport, createPublicReport, getBarangayBySlug, getBarangayPublic,
@@ -9,19 +11,6 @@ import {
 import { CATEGORIES, CATEGORY_VALUES, STATUS_VALUES } from './constants.js';
 import { createIpRateLimiter } from './rate-limit.js';
 import { authRouter } from './routes/auth.js';
-
-function routeId(value) {
-  if (!/^\d+$/.test(value)) return null;
-  const id = Number(value);
-  return Number.isSafeInteger(id) && id > 0 ? id : null;
-}
-
-function unknownFields(body, allowed) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return { body: 'Must be a JSON object' };
-  const fields = {};
-  for (const key of Object.keys(body)) if (!allowed.has(key)) fields[key] = 'Unknown field';
-  return fields;
-}
 
 function validatePublicReport(body) {
   const fields = unknownFields(body, new Set(['reporter_name', 'reporter_contact', 'incident_type', 'incident_datetime', 'sitio', 'landmark', 'respondent_name', 'narrative', 'website']));
@@ -59,6 +48,8 @@ function validatePublicReport(body) {
 export function apiRouter({ pool, appUrl, loginLimiter = createIpRateLimiter({ limit: 10 }), publicLimiter = createIpRateLimiter({ limit: 5 }) }) {
   const router = Router();
   router.use('/auth', authRouter({ pool, appUrl, loginLimiter }));
+  router.use('/accounts', requireUser, requireAdmin, accountsRouter({ pool }));
+  router.use('/barangay', requireUser, barangayRouter({ pool, appUrl }));
   router.use('/blotters', requireUser);
   router.post('/blotters', asyncRoute(async (req, res) => {
     const checked = validateIntake(req.body);

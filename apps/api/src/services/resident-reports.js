@@ -55,9 +55,9 @@ export async function createPublicReport(pool, { barangay, values, now = new Dat
 }
 
 export async function getBarangayPublic(pool, slug, appUrl) {
-  const [rows] = await pool.execute('SELECT b.id, b.name, b.slug, b.city_id, c.name AS city_name FROM barangays b JOIN cities c ON c.id = b.city_id WHERE b.slug = ?', [slug]);
+  const [rows] = await pool.execute('SELECT b.id, b.name, b.slug, b.city_id, b.hall_address, b.contact_number, c.name AS city_name FROM barangays b JOIN cities c ON c.id = b.city_id WHERE b.slug = ?', [slug]);
   if (!rows[0]) return null;
-  return { id: Number(rows[0].id), name: rows[0].name, slug: rows[0].slug, city_name: rows[0].city_name, report_url: `${appUrl.replace(/\/$/, '')}/report/${encodeURIComponent(rows[0].slug)}` };
+  return { id: Number(rows[0].id), name: rows[0].name, slug: rows[0].slug, city_name: rows[0].city_name, hall_address: rows[0].hall_address, contact_number: rows[0].contact_number, report_url: `${appUrl.replace(/\/$/, '')}/report/${encodeURIComponent(rows[0].slug)}` };
 }
 
 export async function getBarangayBySlug(pool, slug) {

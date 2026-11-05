@@ -81,10 +81,10 @@ test('anonymous metadata and unknown routes expose no case details', async ({ pl
   const context = await playwright.request.newContext({ baseURL: origin });
   try {
     expect((await context.get('/api/blotters')).status()).toBe(401);
-    const metadata = await context.get('/api/public/barangays/demo-a');
+    const metadata = await context.get('/api/public/barangays/cebu-city-lahug');
     expect(metadata.status()).toBe(200);
     const { data } = await metadata.json();
-    expect(data.report_url).toContain('/report/demo-a');
+    expect(data.report_url).toContain('/report/cebu-city-lahug');
     expect(data).not.toHaveProperty('users');
     expect(data).not.toHaveProperty('narrative');
     expect(data).not.toHaveProperty('complainant_contact');

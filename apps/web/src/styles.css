@@ -408,3 +408,6 @@ button { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+.row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.row-reset-form { display: grid; gap: 8px; max-width: 360px; margin-top: 10px; }
