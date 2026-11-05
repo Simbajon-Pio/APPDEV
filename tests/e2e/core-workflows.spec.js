@@ -68,7 +68,7 @@ test('real MySQL workflow preserves drafts, audit metadata, and exactly-once res
   expect(stale.status()).toBe(409);
 
   const reporterName = `Synthetic Resident ${Date.now()}`;
-  const resident = await context.post('/api/public/barangays/demo-a/reports', {
+  const resident = await context.post('/api/public/barangays/cebu-city-lahug/reports', {
     headers: { Origin: origin },
     data: {
       reporter_name: reporterName,
@@ -150,7 +150,7 @@ test('staff workspace signs in and renders without horizontal overflow on mobile
 
 test('resident form is accessible directly without staff sign-in', async ({ page }) => {
   await page.setViewportSize({ width: 400, height: 850 });
-  await page.goto('/report/demo-a');
+  await page.goto('/report/cebu-city-lahug');
   await expect(page.getByLabel(/full name|your name|reporter name/i).first()).toBeVisible();
   await expect(page.getByText(/not.*emergency|emergency.*channel/i).first()).toBeVisible();
   expect(page.url()).not.toContain('/login');

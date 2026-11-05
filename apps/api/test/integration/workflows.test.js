@@ -53,10 +53,10 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
   const tenantB = request.agent(app);
   const unauthenticatedMe = await request(app).get('/api/auth/me');
   assert.equal(unauthenticatedMe.status, 401, JSON.stringify(unauthenticatedMe.body));
-  const publicMetadata = await request(app).get('/api/public/barangays/demo-a');
+  const publicMetadata = await request(app).get('/api/public/barangays/cebu-city-lahug');
   assert.equal(publicMetadata.status, 200, JSON.stringify(publicMetadata.body));
-  assert.equal(publicMetadata.body.data.slug, 'demo-a');
-  assert.equal(publicMetadata.body.data.city_name, 'Demo City A');
+  assert.equal(publicMetadata.body.data.slug, 'cebu-city-lahug');
+  assert.equal(publicMetadata.body.data.city_name, 'Cebu City');
   const unknownAccountAgent = request.agent(app);
   const unknownAccountCsrf = await unknownAccountAgent.get('/api/auth/csrf');
   const unknownAccountLogin = await unknownAccountAgent.post('/api/auth/login').set('Origin', origin).set('X-CSRF-Token', unknownAccountCsrf.body.data.csrf_token).send({ username: 'synthetic_missing_user', password: 'wrong-password' });
@@ -80,17 +80,17 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
   assert.equal(afterRestart.status, 200, JSON.stringify(afterRestart.body));
   assert.equal(afterRestart.body.data.user.id, meA.body.data.user.id);
   await restartedApp.locals.sessionStore.close();
-  const [[seededA]] = await pool.execute("SELECT b.id AS barangay_id, u.id AS user_id FROM barangays b JOIN users u ON u.barangay_id = b.id WHERE b.slug = 'demo-a' AND u.username = 'demo_a'");
+  const [[seededA]] = await pool.execute("SELECT b.id AS barangay_id, b.code AS barangay_code, u.id AS user_id FROM barangays b JOIN users u ON u.barangay_id = b.id WHERE b.slug = 'cebu-city-lahug' AND u.username = 'demo_a'");
   assert.equal(meA.body.data.user.barangay.id, Number(seededA.barangay_id));
 
   const created = await tenantA.post('/api/blotters').set('Origin', origin).set('X-CSRF-Token', csrfA).send(base);
   assert.equal(created.status, 201, JSON.stringify(created.body));
-  assert.match(created.body.data.case_id, /^BLOT-DMA-\d{4}-\d{5}$/);
+  assert.equal(created.body.data.case_id.startsWith(`BLOT-${seededA.barangay_code}-`), true);
   assert.equal(created.body.data.created_by, meA.body.data.user.id);
   assert.equal((await tenantB.get(`/api/blotters/${created.body.data.id}`)).status, 404);
   assert.equal((await tenantB.get(`/api/blotters?q=${encodeURIComponent(created.body.data.case_id)}`)).body.meta.total, 0);
 
-  const publicReport = await request(app).post('/api/public/barangays/demo-a/reports').set('Origin', origin).send({
+  const publicReport = await request(app).post('/api/public/barangays/cebu-city-lahug/reports').set('Origin', origin).send({
     reporter_name: 'Synthetic Resident', reporter_contact: null, incident_type: 'property_dispute',
     incident_datetime: base.incident_datetime, sitio: 'Synthetic Purok 2', landmark: null,
     respondent_name: null, narrative: 'Synthetic resident report.', website: ''
@@ -129,7 +129,7 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
   const firstUpdate = await tenantA.patch(`/api/blotters/${created.body.data.id}/status`).set('Origin', origin).set('X-CSRF-Token', csrfA).send({ status: 'settled_at_desk', expected_version: 1 });
   assert.equal(firstUpdate.status, 200, JSON.stringify(firstUpdate.body));
   assert.equal(firstUpdate.body.data.created_at, created.body.data.created_at);
-  const tenant = { barangay_id: Number(seededA.barangay_id), barangay_code: 'DMA', city_id: Number(meA.body.data.user.city.id) };
+  const tenant = { barangay_id: Number(seededA.barangay_id), barangay_code: seededA.barangay_code, city_id: Number(meA.body.data.user.city.id) };
   const auditSnapshot = await pool.execute('SELECT COUNT(*) AS total FROM blotters WHERE barangay_id = ?', [tenant.barangay_id]);
   const beforeFailedCreation = Number(auditSnapshot[0][0].total);
   const intakeYear = Number(new Intl.DateTimeFormat('en', { timeZone: 'Asia/Manila', year: 'numeric' }).format(new Date()));
@@ -183,7 +183,7 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
 
   const tenantAReportId = report.id;
   assert.equal((await tenantB.get(`/api/resident-reports/${tenantAReportId}`)).status, 404);
-  assert.equal((await tenantB.get('/api/resident-reports')).body.meta.total, 0);
+  assert.equal((await tenantB.get('/api/resident-reports')).body.data.some((item) => item.id === tenantAReportId), false);
   const forbiddenOrigin = await tenantA.patch(`/api/blotters/${created.body.data.id}/status`).set('Origin', 'https://attacker.invalid').set('X-CSRF-Token', csrfA).send({ status: 'pending_lupon', expected_version: 2, reason: 'Synthetic reason' });
   assert.equal(forbiddenOrigin.status, 403);
   const invalidSpoof = await tenantA.post('/api/blotters').set('Origin', origin).set('X-CSRF-Token', csrfA).send({ ...base, city_id: 9999 });
@@ -191,7 +191,7 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
   assert.equal((await tenantA.get('/api/blotters?page=1.5')).status, 422);
   assert.equal((await tenantA.get('/api/blotters?date_from=2025-02-30')).status, 422);
 
-  const raceReportResponse = await request(app).post('/api/public/barangays/demo-a/reports').set('Origin', origin).send({
+  const raceReportResponse = await request(app).post('/api/public/barangays/cebu-city-lahug/reports').set('Origin', origin).send({
     reporter_name: 'Synthetic Race Resident', incident_type: 'others', incident_datetime: base.incident_datetime,
     sitio: 'Synthetic Purok 3', narrative: 'Synthetic concurrent approval test.', website: ''
   });
@@ -203,7 +203,7 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
   assert.deepEqual(raceApprovals.map((response) => response.status).sort(), [200, 201]);
   assert.equal(raceApprovals[0].body.data.blotter.id, raceApprovals[1].body.data.blotter.id);
 
-  const rejectReportResponse = await request(app).post('/api/public/barangays/demo-a/reports').set('Origin', origin).send({
+  const rejectReportResponse = await request(app).post('/api/public/barangays/cebu-city-lahug/reports').set('Origin', origin).send({
     reporter_name: 'Synthetic Rejection Resident', incident_type: 'curfew_violation', incident_datetime: base.incident_datetime,
     sitio: 'Synthetic Purok 4', narrative: 'Synthetic rejection test.', website: ''
   });
@@ -232,7 +232,7 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
   assert.equal(noStaffCsrf.status, 403, JSON.stringify(noStaffCsrf.body));
   const attackerOrigin = await tenantA.patch(`/api/blotters/${created.body.data.id}/status`).set('Origin', 'https://attacker.invalid').set('X-CSRF-Token', csrfA).send({ status: 'pending_lupon', expected_version: 3 });
   assert.equal(attackerOrigin.status, 403, JSON.stringify(attackerOrigin.body));
-  const approvedWithReportedPartyDetails = await request(app).post('/api/public/barangays/demo-a/reports').set('Origin', origin).send({
+  const approvedWithReportedPartyDetails = await request(app).post('/api/public/barangays/cebu-city-lahug/reports').set('Origin', origin).send({
     reporter_name: 'Synthetic Party Details Reporter', reporter_contact: '123456789', incident_type: 'property_dispute',
     incident_datetime: base.incident_datetime, sitio: 'Synthetic Purok 5', landmark: null,
     respondent_name: 'Synthetic Known Respondent', narrative: 'Synthetic report with submitted respondent.', website: ''
@@ -258,4 +258,108 @@ test('MySQL-backed API isolates tenants and converts a public report exactly onc
   assert.equal(overviewB.status, 200);
   assert.notEqual(overviewA.body.data.total_blotters, overviewB.body.data.total_blotters);
   assert.equal(csrfB.length > 0, true);
+});
+
+async function openIsolatedApp(t) {
+  const pool = createPool({
+    host: process.env.TEST_DB_HOST || '127.0.0.1', port: Number(process.env.TEST_DB_PORT || 3307),
+    database: testDatabase, user: process.env.TEST_DB_USER || 'ebarangaymo',
+    password: process.env.TEST_DB_PASSWORD || 'local-demo-only', connectionLimit: 8, timezone: 'Z', dateStrings: true
+  });
+  const app = createApp({ pool });
+  setMaxListeners(30, app);
+  t.after(async () => { await app.locals.sessionStore.close(); await pool.end(); });
+  return { app };
+}
+
+test('administrators manage tenant accounts while staff and other tenants are blocked', async (t) => {
+  const { app } = await openIsolatedApp(t);
+  const admin = request.agent(app);
+  const adminCsrf = await signedIn(admin, credentials.a.username, credentials.a.password);
+  const adminId = (await admin.get('/api/auth/me')).body.data.user.id;
+  const staff = request.agent(app);
+  const staffCsrf = await signedIn(staff, 'demo_a_staff', credentials.a.password);
+  const otherAdmin = request.agent(app);
+  const otherAdminCsrf = await signedIn(otherAdmin, credentials.b.username, credentials.b.password);
+  const password = 'Synthetic-Pass-2026';
+  const username = `desk.${Date.now().toString(36)}`;
+
+  assert.equal((await staff.get('/api/accounts')).status, 403);
+  assert.equal((await staff.patch('/api/barangay').set('Origin', origin).set('X-CSRF-Token', staffCsrf).send({ name: 'Staff Rename' })).status, 403);
+
+  const created = await admin.post('/api/accounts').set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ username: ` ${username.toUpperCase()} `, display_name: 'Carmela Ybañez', role: 'staff', password });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  assert.equal(created.body.data.username, username);
+  assert.equal(created.body.data.role, 'staff');
+  assert.equal(Object.hasOwn(created.body.data, 'password_hash'), false);
+  const accountId = created.body.data.id;
+  const duplicate = await admin.post('/api/accounts').set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ username, display_name: 'Duplicate', role: 'staff', password });
+  assert.equal(duplicate.status, 409, JSON.stringify(duplicate.body));
+
+  const listed = await admin.get('/api/accounts');
+  assert.equal(listed.status, 200);
+  assert.equal(listed.body.data.some((row) => row.id === accountId && row.is_active === true), true);
+  assert.equal(listed.body.data.some((row) => Object.hasOwn(row, 'password_hash')), false);
+
+  const newStaff = request.agent(app);
+  await signedIn(newStaff, username, password);
+  const newStaffMe = await newStaff.get('/api/auth/me');
+  assert.equal(newStaffMe.body.data.user.role, 'staff');
+
+  assert.equal((await otherAdmin.patch(`/api/accounts/${accountId}`).set('Origin', origin).set('X-CSRF-Token', otherAdminCsrf).send({ display_name: 'Cross Tenant' })).status, 404);
+  assert.equal((await otherAdmin.post(`/api/accounts/${accountId}/password`).set('Origin', origin).set('X-CSRF-Token', otherAdminCsrf).send({ password: 'Another-Pass-2026' })).status, 404);
+
+  const selfDemotion = await admin.patch(`/api/accounts/${adminId}`).set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ role: 'staff' });
+  assert.equal(selfDemotion.status, 422, JSON.stringify(selfDemotion.body));
+  assert.match(selfDemotion.body.error.fields.role, /own administrator access/);
+  assert.equal((await admin.patch(`/api/accounts/${adminId}`).set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ is_active: false })).status, 422);
+
+  const reset = await admin.post(`/api/accounts/${accountId}/password`).set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ password: 'Reset-Pass-2026' });
+  assert.equal(reset.status, 200, JSON.stringify(reset.body));
+  assert.deepEqual(reset.body.data, { password_reset: true });
+  assert.equal((await newStaff.get('/api/auth/me')).status, 401, 'a password reset must end the existing session');
+  const oldPasswordAttempt = request.agent(app);
+  const oldCsrf = await oldPasswordAttempt.get('/api/auth/csrf');
+  const rejected = await oldPasswordAttempt.post('/api/auth/login').set('Origin', origin).set('X-CSRF-Token', oldCsrf.body.data.csrf_token).send({ username, password });
+  assert.equal(rejected.status, 401, 'the previous password must no longer work');
+
+  const deactivated = await admin.patch(`/api/accounts/${accountId}`).set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ is_active: false });
+  assert.equal(deactivated.status, 200, JSON.stringify(deactivated.body));
+  assert.equal(deactivated.body.data.is_active, false);
+  const inactive = request.agent(app);
+  const inactiveCsrf = await inactive.get('/api/auth/csrf');
+  const inactiveLogin = await inactive.post('/api/auth/login').set('Origin', origin).set('X-CSRF-Token', inactiveCsrf.body.data.csrf_token).send({ username, password: 'Reset-Pass-2026' });
+  assert.equal(inactiveLogin.status, 401, 'deactivated accounts cannot sign in');
+});
+
+test('barangay profile is readable by staff, editable by administrators, and renames reach the session', async (t) => {
+  const { app } = await openIsolatedApp(t);
+  const admin = request.agent(app);
+  const adminCsrf = await signedIn(admin, credentials.a.username, credentials.a.password);
+  const staff = request.agent(app);
+  await signedIn(staff, 'demo_a_staff', credentials.a.password);
+
+  const profile = await staff.get('/api/barangay');
+  assert.equal(profile.status, 200, JSON.stringify(profile.body));
+  assert.equal(profile.body.data.slug, 'cebu-city-lahug');
+  assert.equal(profile.body.data.city.name, 'Cebu City');
+  assert.equal(profile.body.data.report_url.endsWith('/report/cebu-city-lahug'), true);
+  assert.equal(Object.hasOwn(profile.body.data, 'city_id'), false);
+
+  assert.equal((await admin.patch('/api/barangay').set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ code: 'HACK001' })).status, 422);
+  assert.equal((await admin.patch('/api/barangay').set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ slug: 'hacked' })).status, 422);
+
+  try {
+    const renamed = await admin.patch('/api/barangay').set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ name: 'Lahug Synthetic Test', hall_address: 'Synthetic Hall Road 1', contact_number: '032 555-0100' });
+    assert.equal(renamed.status, 200, JSON.stringify(renamed.body));
+    assert.equal(renamed.body.data.name, 'Lahug Synthetic Test');
+    assert.equal(renamed.body.data.hall_address, 'Synthetic Hall Road 1');
+    const me = await admin.get('/api/auth/me');
+    assert.equal(me.body.data.user.barangay.name, 'Lahug Synthetic Test');
+    const publicView = await request(app).get('/api/public/barangays/cebu-city-lahug');
+    assert.equal(publicView.body.data.name, 'Lahug Synthetic Test');
+    assert.equal(publicView.body.data.contact_number, '032 555-0100');
+  } finally {
+    await admin.patch('/api/barangay').set('Origin', origin).set('X-CSRF-Token', adminCsrf).send({ name: 'Lahug', hall_address: null, contact_number: null });
+  }
 });

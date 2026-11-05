@@ -17,6 +17,7 @@ test-results/
 
 # Local agent/editor workspaces
 .claude/worktrees/
+.claude
 .superpowers/
 .kilo/
 .worktrees/

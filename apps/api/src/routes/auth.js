@@ -4,7 +4,7 @@ import { asyncRoute, HttpError, requireUser, sendData } from '../http.js';
 
 function publicUser(user, appUrl) {
   return {
-    id: Number(user.id), username: user.username, display_name: user.display_name,
+    id: Number(user.id), username: user.username, display_name: user.display_name, role: user.role,
     barangay: { id: Number(user.barangay_id), name: user.barangay_name, code: user.barangay_code, slug: user.barangay_slug },
     city: { id: Number(user.city_id), name: user.city_name },
     report_url: `${appUrl.replace(/\/$/, '')}/report/${encodeURIComponent(user.barangay_slug)}`
@@ -28,7 +28,7 @@ export function authRouter({ pool, appUrl, loginLimiter }) {
     const password = typeof body.password === 'string' ? body.password : '';
     if (!username || username.length > 80 || !password || password.length > 128) throw new HttpError(422, 'VALIDATION_ERROR', 'Check the marked fields.', { username: 'Username or password is invalid' });
     const [rows] = await pool.execute(
-      `SELECT u.id, u.username, u.password_hash, u.display_name, u.barangay_id, b.name AS barangay_name,
+      `SELECT u.id, u.username, u.password_hash, u.display_name, u.role, u.barangay_id, b.name AS barangay_name,
        b.code AS barangay_code, b.slug AS barangay_slug, b.city_id, c.name AS city_name
        FROM users u JOIN barangays b ON b.id = u.barangay_id JOIN cities c ON c.id = b.city_id
        WHERE u.username = ? AND u.is_active = 1 LIMIT 1`, [username]
@@ -38,7 +38,7 @@ export function authRouter({ pool, appUrl, loginLimiter }) {
     await new Promise((resolve, reject) => req.session.regenerate((error) => error ? reject(error) : resolve()));
     req.session.csrfToken = randomToken();
     req.session.user = {
-      id: Number(rows[0].id), username: rows[0].username, display_name: rows[0].display_name,
+      id: Number(rows[0].id), username: rows[0].username, display_name: rows[0].display_name, role: rows[0].role,
       barangay_id: Number(rows[0].barangay_id), barangay_name: rows[0].barangay_name,
       barangay_code: rows[0].barangay_code, barangay_slug: rows[0].barangay_slug,
       city_id: Number(rows[0].city_id), city_name: rows[0].city_name

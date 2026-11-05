@@ -1,4 +1,4 @@
-name: ebarangaymo-sprint2
+name: ebarangaymo
 
 services:
   mysql:
